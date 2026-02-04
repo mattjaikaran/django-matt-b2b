@@ -1,24 +1,18 @@
 """
 Test settings for django-matt-b2b project.
 
-Uses SQLite for testing to avoid requiring PostgreSQL.
+Uses PostgreSQL in CI (when env vars are set), SQLite for local testing.
 """
 
 import os
 
-# Force SQLite before importing base settings
-os.environ["USE_SQLITE"] = "true"
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest")
+# Only use SQLite if explicitly requested or if no DB env vars are set
+if not os.getenv("DB_NAME"):
+    os.environ.setdefault("USE_SQLITE", "true")
+
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest-minimum-32-chars")
 
 from .settings import *  # noqa: F401, F403
-
-# Override database to ensure SQLite is used
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "test_db.sqlite3",  # noqa: F405
-    }
-}
 
 # Disable password validators for faster tests
 AUTH_PASSWORD_VALIDATORS = []

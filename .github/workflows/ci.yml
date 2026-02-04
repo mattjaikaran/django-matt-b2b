@@ -89,7 +89,6 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
         run: uv run pytest -v --cov=apps --cov-report=xml
-        continue-on-error: true  # B2B tests need work, don't block CI
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4

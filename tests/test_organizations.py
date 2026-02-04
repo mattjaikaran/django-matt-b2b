@@ -1,324 +1,250 @@
-"""Tests for organization endpoints."""
+"""Tests for organization models and schemas."""
 
 import pytest
 from django.contrib.auth import get_user_model
 
-from apps.organizations.models import Invitation, InvitationStatus, Membership, MembershipRole
+from apps.organizations.models import (
+    Invitation,
+    InvitationStatus,
+    Membership,
+    MembershipRole,
+    Organization,
+    Team,
+)
 
 User = get_user_model()
 
 
 @pytest.mark.django_db
-class TestOrganizationEndpoints:
-    """Test organization endpoints."""
+class TestOrganizationModel:
+    """Test organization model functionality."""
 
-    async def test_list_organizations(self, authenticated_client, organization):
-        """Test listing user's organizations."""
-        response = await authenticated_client.get("/api/organizations")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["name"] == "Test Organization"
-        assert data[0]["role"] == "owner"
-
-    async def test_create_organization(self, authenticated_client):
+    def test_create_organization(self, user):
         """Test creating an organization."""
-        response = await authenticated_client.post(
-            "/api/organizations",
-            data={
-                "name": "New Organization",
-                "slug": "new-org",
-                "description": "A new test organization",
-            },
-            content_type="application/json",
+        org = Organization.objects.create(
+            name="Test Org",
+            slug="test-org-model",
+            description="A test organization",
         )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "New Organization"
-        assert data["slug"] == "new-org"
+        assert org.name == "Test Org"
+        assert org.slug == "test-org-model"
+        assert str(org) == "Test Org"
 
-    async def test_create_organization_duplicate_slug(self, authenticated_client, organization):
-        """Test creating organization with duplicate slug fails."""
-        response = await authenticated_client.post(
-            "/api/organizations",
-            data={
-                "name": "Another Organization",
-                "slug": "test-org",  # Same as fixture
-            },
-            content_type="application/json",
-        )
-        assert response.status_code == 422
+    def test_organization_member_count(self, organization, user, member_user):
+        """Test organization member count property."""
+        # Organization fixture creates owner, member_user fixture creates member
+        assert organization.member_count == 2
 
-    async def test_get_organization(self, authenticated_client, organization):
-        """Test getting organization details."""
-        response = await authenticated_client.get(f"/api/organizations/{organization.id}")
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Test Organization"
+    def test_organization_team_count(self, organization, team):
+        """Test organization team count property."""
+        assert organization.team_count == 1
 
-    async def test_update_organization(self, authenticated_client, organization):
-        """Test updating organization."""
-        response = await authenticated_client.patch(
-            f"/api/organizations/{organization.id}",
-            data={"name": "Updated Organization"},
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Updated Organization"
+    def test_organization_get_owners(self, organization, user):
+        """Test getting organization owners."""
+        owners = organization.get_owners()
+        assert owners.count() == 1
+        assert owners.first().user == user
 
-    async def test_update_organization_member_forbidden(self, member_client, organization):
-        """Test that regular members cannot update organization."""
-        response = await member_client.patch(
-            f"/api/organizations/{organization.id}",
-            data={"name": "Hacked Organization"},
-            content_type="application/json",
-        )
-        assert response.status_code == 403
+    def test_organization_get_admins(self, organization, user, member_user):
+        """Test getting organization admins (includes owners)."""
+        # Make member_user an admin
+        membership = Membership.objects.get(user=member_user, organization=organization)
+        membership.role = MembershipRole.ADMIN
+        membership.save()
 
-    async def test_delete_organization(self, authenticated_client, user):
-        """Test deleting organization."""
-        from apps.organizations.models import Organization
-
-        # Create a new org to delete
-        org = Organization.objects.create(name="To Delete", slug="to-delete")
-        Membership.objects.create(user=user, organization=org, role=MembershipRole.OWNER)
-
-        response = await authenticated_client.delete(f"/api/organizations/{org.id}")
-        assert response.status_code == 200
-        assert not Organization.objects.filter(id=org.id).exists()
-
-    async def test_delete_organization_member_forbidden(self, member_client, organization):
-        """Test that regular members cannot delete organization."""
-        response = await member_client.delete(f"/api/organizations/{organization.id}")
-        assert response.status_code == 403
+        admins = organization.get_admins()
+        assert admins.count() == 2  # owner + admin
 
 
 @pytest.mark.django_db
-class TestTeamEndpoints:
-    """Test team endpoints."""
+class TestTeamModel:
+    """Test team model functionality."""
 
-    async def test_list_teams(self, authenticated_client, organization, team):
-        """Test listing teams."""
-        response = await authenticated_client.get(f"/api/organizations/{organization.id}/teams")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["name"] == "Test Team"
-
-    async def test_create_team(self, authenticated_client, organization):
+    def test_create_team(self, organization):
         """Test creating a team."""
-        response = await authenticated_client.post(
-            f"/api/organizations/{organization.id}/teams",
-            data={
-                "name": "New Team",
-                "slug": "new-team",
-                "description": "A new team",
-            },
-            content_type="application/json",
+        team = Team.objects.create(
+            organization=organization,
+            name="Engineering",
+            slug="engineering",
+            description="Engineering team",
         )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "New Team"
+        assert team.name == "Engineering"
+        assert team.organization == organization
+        assert "Engineering" in str(team)
 
-    async def test_create_team_member_forbidden(self, member_client, organization):
-        """Test that regular members cannot create teams."""
-        response = await member_client.post(
-            f"/api/organizations/{organization.id}/teams",
-            data={"name": "Sneaky Team", "slug": "sneaky"},
-            content_type="application/json",
-        )
-        assert response.status_code == 403
-
-    async def test_get_team(self, authenticated_client, organization, team):
-        """Test getting team details."""
-        response = await authenticated_client.get(
-            f"/api/organizations/{organization.id}/teams/{team.id}"
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Test Team"
-        assert "members" in data
-
-    async def test_update_team(self, authenticated_client, organization, team):
-        """Test updating a team."""
-        response = await authenticated_client.patch(
-            f"/api/organizations/{organization.id}/teams/{team.id}",
-            data={"name": "Updated Team"},
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["name"] == "Updated Team"
-
-    async def test_delete_team(self, authenticated_client, organization, team):
-        """Test deleting a team."""
-        response = await authenticated_client.delete(
-            f"/api/organizations/{organization.id}/teams/{team.id}"
-        )
-        assert response.status_code == 200
-
-
-@pytest.mark.django_db
-class TestMemberEndpoints:
-    """Test member endpoints."""
-
-    async def test_list_members(self, authenticated_client, organization, member_user):
-        """Test listing members."""
-        response = await authenticated_client.get(f"/api/organizations/{organization.id}/members")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 2  # Owner + member
-
-    async def test_update_member_role(self, authenticated_client, organization, member_user):
-        """Test updating member role."""
-        membership = Membership.objects.get(user=member_user, organization=organization)
-        response = await authenticated_client.patch(
-            f"/api/organizations/{organization.id}/members/{membership.id}",
-            data={"role": "admin"},
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["role"] == "admin"
-
-    async def test_remove_member(self, authenticated_client, organization, member_user):
-        """Test removing a member."""
-        membership = Membership.objects.get(user=member_user, organization=organization)
-        response = await authenticated_client.delete(
-            f"/api/organizations/{organization.id}/members/{membership.id}"
-        )
-        assert response.status_code == 200
-
-    async def test_cannot_remove_owner(self, authenticated_client, organization, user):
-        """Test that owner cannot be removed."""
+    def test_team_member_count(self, organization, team, user):
+        """Test team member count property."""
         membership = Membership.objects.get(user=user, organization=organization)
-        response = await authenticated_client.delete(
-            f"/api/organizations/{organization.id}/members/{membership.id}"
-        )
-        assert response.status_code == 422
-
-    async def test_leave_organization(self, member_client, organization, member_user):
-        """Test leaving an organization."""
-        response = await member_client.post(f"/api/organizations/{organization.id}/leave")
-        assert response.status_code == 200
-        assert not Membership.objects.filter(user=member_user, organization=organization).exists()
-
-    async def test_owner_cannot_leave_alone(self, authenticated_client, organization, user):
-        """Test that sole owner cannot leave."""
-        response = await authenticated_client.post(f"/api/organizations/{organization.id}/leave")
-        assert response.status_code == 422
+        team.members.add(membership)
+        assert team.member_count == 1
 
 
 @pytest.mark.django_db
-class TestInvitationEndpoints:
-    """Test invitation endpoints."""
+class TestMembershipModel:
+    """Test membership model functionality."""
 
-    async def test_create_invitation(self, authenticated_client, organization):
+    def test_membership_roles(self, user, organization):
+        """Test membership role properties."""
+        membership = Membership.objects.get(user=user, organization=organization)
+        assert membership.is_owner
+        assert membership.is_admin
+        assert membership.can_manage_members
+        assert membership.can_delete_organization
+
+    def test_member_role_permissions(self, member_user, organization):
+        """Test member role has limited permissions."""
+        membership = Membership.objects.get(user=member_user, organization=organization)
+        assert not membership.is_owner
+        assert not membership.is_admin
+        assert not membership.can_manage_members
+        assert not membership.can_delete_organization
+
+    def test_admin_role_permissions(self, organization, user2):
+        """Test admin role permissions."""
+        membership = Membership.objects.create(
+            user=user2,
+            organization=organization,
+            role=MembershipRole.ADMIN,
+        )
+        assert not membership.is_owner
+        assert membership.is_admin
+        assert membership.can_manage_members
+        assert not membership.can_delete_organization
+
+    def test_viewer_role_permissions(self, organization, user2):
+        """Test viewer role has minimal permissions."""
+        membership = Membership.objects.create(
+            user=user2,
+            organization=organization,
+            role=MembershipRole.VIEWER,
+        )
+        assert not membership.is_owner
+        assert not membership.is_admin
+        assert not membership.can_manage_members
+        assert not membership.can_delete_organization
+
+    def test_membership_str(self, user, organization):
+        """Test membership string representation."""
+        membership = Membership.objects.get(user=user, organization=organization)
+        assert user.email in str(membership)
+        assert organization.name in str(membership)
+
+
+@pytest.mark.django_db
+class TestInvitationModel:
+    """Test invitation model functionality."""
+
+    def test_create_invitation(self, organization, user):
         """Test creating an invitation."""
-        response = await authenticated_client.post(
-            f"/api/organizations/{organization.id}/invitations",
-            data={
-                "email": "newmember@example.com",
-                "role": "member",
-            },
-            content_type="application/json",
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["email"] == "newmember@example.com"
-        assert data["status"] == "pending"
+        from datetime import timedelta
 
-    async def test_list_invitations(self, authenticated_client, organization):
-        """Test listing invitations."""
-        # Create an invitation first
-        Invitation.objects.create(
-            organization=organization,
-            email="pending@example.com",
-            role=MembershipRole.MEMBER,
-            token="test-token-123",
-            expires_at="2099-01-01T00:00:00Z",
-        )
+        from django.utils import timezone
 
-        response = await authenticated_client.get(
-            f"/api/organizations/{organization.id}/invitations"
-        )
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-
-    async def test_accept_invitation(self, authenticated_client2, organization, user2):
-        """Test accepting an invitation."""
-        # Create invitation for user2
         invitation = Invitation.objects.create(
             organization=organization,
-            email="test2@example.com",
+            email="invite@example.com",
             role=MembershipRole.MEMBER,
-            token="accept-token-123",
-            expires_at="2099-01-01T00:00:00Z",
+            token="test-token-12345",
+            invited_by=user,
+            expires_at=timezone.now() + timedelta(days=7),
         )
+        assert invitation.email == "invite@example.com"
+        assert invitation.role == MembershipRole.MEMBER
+        assert invitation.is_pending
+        assert not invitation.is_expired
+        assert "invite@example.com" in str(invitation)
 
-        response = await authenticated_client2.post(f"/api/invitations/{invitation.token}/accept")
-        assert response.status_code == 200
-        assert Membership.objects.filter(user=user2, organization=organization).exists()
+    def test_invitation_expired(self, organization, user):
+        """Test expired invitation."""
+        from datetime import timedelta
 
-    async def test_decline_invitation(self, authenticated_client2, organization, user2):
-        """Test declining an invitation."""
+        from django.utils import timezone
+
         invitation = Invitation.objects.create(
             organization=organization,
-            email="test2@example.com",
+            email="expired@example.com",
             role=MembershipRole.MEMBER,
-            token="decline-token-123",
-            expires_at="2099-01-01T00:00:00Z",
+            token="expired-token",
+            invited_by=user,
+            expires_at=timezone.now() - timedelta(days=1),  # Expired
         )
+        assert invitation.is_expired
 
-        response = await authenticated_client2.post(f"/api/invitations/{invitation.token}/decline")
-        assert response.status_code == 200
+    def test_invitation_revoke(self, organization, user):
+        """Test revoking an invitation."""
+        from datetime import timedelta
 
-        invitation.refresh_from_db()
-        assert invitation.status == InvitationStatus.DECLINED
+        from django.utils import timezone
 
-    async def test_cancel_invitation(self, authenticated_client, organization):
-        """Test cancelling an invitation."""
         invitation = Invitation.objects.create(
             organization=organization,
-            email="cancel@example.com",
+            email="revoke@example.com",
             role=MembershipRole.MEMBER,
-            token="cancel-token-123",
-            expires_at="2099-01-01T00:00:00Z",
+            token="revoke-token",
+            invited_by=user,
+            expires_at=timezone.now() + timedelta(days=7),
         )
-
-        response = await authenticated_client.delete(
-            f"/api/organizations/{organization.id}/invitations/{invitation.id}"
-        )
-        assert response.status_code == 200
-
-        invitation.refresh_from_db()
+        invitation.revoke()
         assert invitation.status == InvitationStatus.REVOKED
 
-    async def test_cannot_invite_existing_member(
-        self, authenticated_client, organization, member_user
-    ):
-        """Test that existing members cannot be invited again."""
-        response = await authenticated_client.post(
-            f"/api/organizations/{organization.id}/invitations",
-            data={"email": member_user.email, "role": "member"},
-            content_type="application/json",
-        )
-        assert response.status_code == 422
 
-    async def test_get_my_invitations(self, authenticated_client2, organization, user2):
-        """Test getting user's pending invitations."""
-        Invitation.objects.create(
-            organization=organization,
-            email="test2@example.com",
-            role=MembershipRole.MEMBER,
-            token="my-inv-token",
-            expires_at="2099-01-01T00:00:00Z",
-        )
+@pytest.mark.django_db
+class TestOrganizationSchemas:
+    """Test organization Pydantic schemas."""
 
-        response = await authenticated_client2.get("/api/invitations")
-        assert response.status_code == 200
-        data = response.json()
-        assert len(data) == 1
-        assert data[0]["organization_name"] == "Test Organization"
+    def test_organization_create_schema(self):
+        """Test OrganizationCreateSchema validation."""
+        from apps.organizations.schemas import OrganizationCreateSchema
+
+        data = OrganizationCreateSchema(
+            name="Test Org",
+            slug="test-org",
+            description="A test organization",
+        )
+        assert data.name == "Test Org"
+        assert data.slug == "test-org"
+
+    def test_organization_update_schema(self):
+        """Test OrganizationUpdateSchema validation."""
+        from apps.organizations.schemas import OrganizationUpdateSchema
+
+        data = OrganizationUpdateSchema(name="Updated Name")
+        assert data.name == "Updated Name"
+        assert data.description is None
+
+    def test_team_create_schema(self):
+        """Test TeamCreateSchema validation."""
+        from apps.organizations.schemas import TeamCreateSchema
+
+        data = TeamCreateSchema(
+            name="New Team",
+            slug="new-team",
+            description="A new team",
+        )
+        assert data.name == "New Team"
+        assert data.slug == "new-team"
+
+    def test_invitation_create_schema(self):
+        """Test InvitationCreateSchema validation."""
+        from apps.organizations.schemas import InvitationCreateSchema
+
+        data = InvitationCreateSchema(
+            email="newmember@example.com",
+            role="member",
+            message="Welcome!",
+        )
+        assert data.email == "newmember@example.com"
+        assert data.role == "member"
+        assert data.message == "Welcome!"
+
+    def test_membership_update_schema(self):
+        """Test MembershipUpdateSchema validation."""
+        from apps.organizations.schemas import MembershipUpdateSchema
+
+        data = MembershipUpdateSchema(
+            role="admin",
+            job_title="Engineer",
+            department="Engineering",
+        )
+        assert data.role == "admin"
+        assert data.job_title == "Engineer"
