@@ -2,11 +2,11 @@
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
-
 from django_matt import MattAPI
-from django_matt.auth import create_token_pair, jwt_required, refresh_access_token
+from django_matt.auth import create_token_pair, jwt_required
+from django_matt.auth.jwt import refresh_tokens
 from django_matt.core import APIController
-from django_matt.core.errors import APIError, NotFoundAPIError, ValidationAPIError
+from django_matt.core.errors import APIError, ValidationAPIError
 
 from .schemas import (
     ChangePasswordSchema,
@@ -27,36 +27,36 @@ class AuthController(APIController):
     tags = ["Auth"]
 
     @staticmethod
-    async def register(request, data: UserCreateSchema) -> UserSchema:
+    async def register(request, body: UserCreateSchema) -> UserSchema:
         """Register a new user."""
         # Check if email exists
-        if await User.objects.filter(email=data.email).aexists():
+        if await User.objects.filter(email=body.email).aexists():
             raise ValidationAPIError("Email already registered")
 
         # Check if username exists
-        if await User.objects.filter(username=data.username).aexists():
+        if await User.objects.filter(username=body.username).aexists():
             raise ValidationAPIError("Username already taken")
 
         # Create user
         user = await User.objects.acreate(
-            email=data.email,
-            username=data.username,
-            password=make_password(data.password),
-            first_name=data.first_name,
-            last_name=data.last_name,
+            email=body.email,
+            username=body.username,
+            password=make_password(body.password),
+            first_name=body.first_name,
+            last_name=body.last_name,
         )
 
         return UserSchema.model_validate(user)
 
     @staticmethod
-    async def login(request, data: LoginSchema) -> TokenSchema:
+    async def login(request, body: LoginSchema) -> TokenSchema:
         """Login and get tokens."""
         try:
-            user = await User.objects.aget(email=data.email)
+            user = await User.objects.aget(email=body.email)
         except User.DoesNotExist:
             raise APIError(status_code=401, message="Invalid credentials")
 
-        if not check_password(data.password, user.password):
+        if not check_password(body.password, user.password):
             raise APIError(status_code=401, message="Invalid credentials")
 
         if not user.is_active:
@@ -66,10 +66,10 @@ class AuthController(APIController):
         return TokenSchema(**tokens)
 
     @staticmethod
-    async def refresh(request, data: RefreshTokenSchema) -> TokenSchema:
+    async def refresh(request, body: RefreshTokenSchema) -> TokenSchema:
         """Refresh access token."""
         try:
-            tokens = refresh_access_token(data.refresh_token)
+            tokens = refresh_tokens(body.refresh_token)
             return TokenSchema(**tokens)
         except Exception as e:
             raise APIError(status_code=401, message=str(e))
@@ -82,10 +82,10 @@ class AuthController(APIController):
 
     @staticmethod
     @jwt_required
-    async def update_me(request, data: UserUpdateSchema) -> UserSchema:
+    async def update_me(request, body: UserUpdateSchema) -> UserSchema:
         """Update current user profile."""
         user = request.user
-        update_data = data.model_dump(exclude_unset=True)
+        update_data = body.model_dump(exclude_unset=True)
 
         for field, value in update_data.items():
             setattr(user, field, value)
@@ -95,14 +95,14 @@ class AuthController(APIController):
 
     @staticmethod
     @jwt_required
-    async def change_password(request, data: ChangePasswordSchema) -> dict:
+    async def change_password(request, body: ChangePasswordSchema) -> dict:
         """Change password."""
         user = request.user
 
-        if not check_password(data.current_password, user.password):
+        if not check_password(body.current_password, user.password):
             raise ValidationAPIError("Current password is incorrect")
 
-        user.password = make_password(data.new_password)
+        user.password = make_password(body.new_password)
         await user.asave()
 
         return {"message": "Password changed successfully"}
@@ -118,10 +118,10 @@ class AuthController(APIController):
 
 def register_auth_routes(api: MattAPI) -> None:
     """Register auth routes on the API."""
-    api.post("/auth/register", response=UserSchema, tags=["Auth"])(AuthController.register)
-    api.post("/auth/login", response=TokenSchema, tags=["Auth"])(AuthController.login)
-    api.post("/auth/refresh", response=TokenSchema, tags=["Auth"])(AuthController.refresh)
-    api.post("/auth/logout", tags=["Auth"])(AuthController.logout)
-    api.get("/auth/me", response=UserSchema, tags=["Auth"])(AuthController.me)
-    api.patch("/auth/me", response=UserSchema, tags=["Auth"])(AuthController.update_me)
-    api.post("/auth/change-password", tags=["Auth"])(AuthController.change_password)
+    api.post("auth/register", response_model=UserSchema, tags=["Auth"])(AuthController.register)
+    api.post("auth/login", response_model=TokenSchema, tags=["Auth"])(AuthController.login)
+    api.post("auth/refresh", response_model=TokenSchema, tags=["Auth"])(AuthController.refresh)
+    api.post("auth/logout", tags=["Auth"])(AuthController.logout)
+    api.get("auth/me", response_model=UserSchema, tags=["Auth"])(AuthController.me)
+    api.patch("auth/me", response_model=UserSchema, tags=["Auth"])(AuthController.update_me)
+    api.post("auth/change-password", tags=["Auth"])(AuthController.change_password)

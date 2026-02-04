@@ -1,5 +1,11 @@
 """Pytest configuration and fixtures."""
 
+import os
+
+# Set environment variables before Django settings are loaded
+os.environ.setdefault("USE_SQLITE", "true")
+os.environ.setdefault("SECRET_KEY", "test-secret-key-for-pytest")
+
 import pytest
 from django.contrib.auth import get_user_model
 
@@ -128,7 +134,6 @@ def member_user(db, organization):
 def member_client(db, member_user):
     """Create an authenticated client for the member user."""
     from django.test import AsyncClient
-
     from django_matt.auth import create_token_pair
 
     client = AsyncClient()

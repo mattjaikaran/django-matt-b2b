@@ -135,6 +135,7 @@ class InvitationAdmin(admin.ModelAdmin):
     def resend_invitations(self, request, queryset):
         """Resend selected invitations (extend expiry)."""
         from datetime import timedelta
+
         from django.conf import settings
         from django.utils import timezone
 

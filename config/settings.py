@@ -138,7 +138,9 @@ DJANGO_MATT = {
 # JWT Settings
 DJANGO_MATT_JWT = {
     "ACCESS_TOKEN_LIFETIME": int(os.getenv("JWT_ACCESS_TOKEN_LIFETIME", 60 * 15)),  # 15 minutes
-    "REFRESH_TOKEN_LIFETIME": int(os.getenv("JWT_REFRESH_TOKEN_LIFETIME", 60 * 60 * 24 * 7)),  # 7 days
+    "REFRESH_TOKEN_LIFETIME": int(
+        os.getenv("JWT_REFRESH_TOKEN_LIFETIME", 60 * 60 * 24 * 7)
+    ),  # 7 days
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "AUTH_HEADER_NAME": "Authorization",

@@ -1,0 +1,107 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.12"
+  UV_VERSION: "0.4.0"
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          # Install dev dependencies only (skip django-matt for now since it requires SSH)
+          uv pip install --system ruff mypy django-stubs
+
+      - name: Run Ruff check
+        run: ruff check .
+
+      - name: Run Ruff format check
+        run: ruff format --check .
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: ${{ env.UV_VERSION }}
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Configure SSH for django-matt
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.DJANGO_MATT_SSH_KEY }}
+        run: |
+          if [ -n "$SSH_PRIVATE_KEY" ]; then
+            mkdir -p ~/.ssh
+            echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+            chmod 600 ~/.ssh/id_rsa
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+          fi
+
+      - name: Install dependencies
+        run: |
+          # Try to install with SSH key, fall back to local development
+          if [ -f ~/.ssh/id_rsa ]; then
+            uv sync --extra dev
+          else
+            echo "No SSH key available. Skipping django-matt installation."
+            echo "To run tests, add DJANGO_MATT_SSH_KEY secret with deploy key access."
+            # Install only the dev dependencies for linting
+            uv pip install --system pytest pytest-django pytest-asyncio pytest-cov httpx
+          fi
+
+      - name: Run tests
+        env:
+          USE_SQLITE: "true"
+          SECRET_KEY: "test-secret-key-for-ci"
+          DEBUG: "false"
+        run: |
+          if [ -f ~/.ssh/id_rsa ]; then
+            uv run pytest -v --cov=apps --cov-report=xml
+          else
+            echo "Skipping tests - django-matt not installed"
+            echo "Add DJANGO_MATT_SSH_KEY secret to enable full test suite"
+          fi
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v4
+        if: success()
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false

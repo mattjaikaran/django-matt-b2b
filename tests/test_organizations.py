@@ -202,9 +202,7 @@ class TestMemberEndpoints:
         """Test leaving an organization."""
         response = await member_client.post(f"/api/organizations/{organization.id}/leave")
         assert response.status_code == 200
-        assert not Membership.objects.filter(
-            user=member_user, organization=organization
-        ).exists()
+        assert not Membership.objects.filter(user=member_user, organization=organization).exists()
 
     async def test_owner_cannot_leave_alone(self, authenticated_client, organization, user):
         """Test that sole owner cannot leave."""
@@ -260,13 +258,9 @@ class TestInvitationEndpoints:
             expires_at="2099-01-01T00:00:00Z",
         )
 
-        response = await authenticated_client2.post(
-            f"/api/invitations/{invitation.token}/accept"
-        )
+        response = await authenticated_client2.post(f"/api/invitations/{invitation.token}/accept")
         assert response.status_code == 200
-        assert Membership.objects.filter(
-            user=user2, organization=organization
-        ).exists()
+        assert Membership.objects.filter(user=user2, organization=organization).exists()
 
     async def test_decline_invitation(self, authenticated_client2, organization, user2):
         """Test declining an invitation."""
@@ -278,9 +272,7 @@ class TestInvitationEndpoints:
             expires_at="2099-01-01T00:00:00Z",
         )
 
-        response = await authenticated_client2.post(
-            f"/api/invitations/{invitation.token}/decline"
-        )
+        response = await authenticated_client2.post(f"/api/invitations/{invitation.token}/decline")
         assert response.status_code == 200
 
         invitation.refresh_from_db()
@@ -304,7 +296,9 @@ class TestInvitationEndpoints:
         invitation.refresh_from_db()
         assert invitation.status == InvitationStatus.REVOKED
 
-    async def test_cannot_invite_existing_member(self, authenticated_client, organization, member_user):
+    async def test_cannot_invite_existing_member(
+        self, authenticated_client, organization, member_user
+    ):
         """Test that existing members cannot be invited again."""
         response = await authenticated_client.post(
             f"/api/organizations/{organization.id}/invitations",

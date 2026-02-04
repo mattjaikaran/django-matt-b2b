@@ -8,7 +8,6 @@ from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
-
 from django_matt import MattAPI
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
@@ -101,9 +100,9 @@ class OrganizationController(APIController):
     @jwt_required
     async def list_organizations(request) -> list[OrganizationWithRoleSchema]:
         """List organizations the current user belongs to."""
-        memberships = Membership.objects.filter(
-            user=request.user, is_active=True
-        ).select_related("organization")
+        memberships = Membership.objects.filter(user=request.user, is_active=True).select_related(
+            "organization"
+        )
 
         result = []
         async for membership in memberships:
@@ -126,20 +125,20 @@ class OrganizationController(APIController):
 
     @staticmethod
     @jwt_required
-    async def create_organization(request, data: OrganizationCreateSchema) -> OrganizationSchema:
+    async def create_organization(request, body: OrganizationCreateSchema) -> OrganizationSchema:
         """Create a new organization."""
         # Check if slug is taken
-        if await Organization.objects.filter(slug=data.slug).aexists():
+        if await Organization.objects.filter(slug=body.slug).aexists():
             raise ValidationAPIError("Organization slug already taken")
 
         async with transaction.atomic():
             # Create organization
             org = await Organization.objects.acreate(
-                name=data.name,
-                slug=data.slug,
-                description=data.description,
-                logo_url=data.logo_url,
-                website=data.website,
+                name=body.name,
+                slug=body.slug,
+                description=body.description,
+                logo_url=body.logo_url,
+                website=body.website,
                 plan=getattr(django_settings, "DEFAULT_ORG_PLAN", "free"),
             )
 
@@ -186,13 +185,13 @@ class OrganizationController(APIController):
     @staticmethod
     @jwt_required
     async def update_organization(
-        request, org_id: UUID, data: OrganizationUpdateSchema
+        request, org_id: UUID, body: OrganizationUpdateSchema
     ) -> OrganizationSchema:
         """Update organization (admin only)."""
         membership = await require_admin(request.user, org_id)
         org = membership.organization
 
-        update_data = data.model_dump(exclude_unset=True)
+        update_data = body.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(org, field, value)
 
@@ -238,7 +237,7 @@ class OrganizationController(APIController):
     @staticmethod
     @jwt_required
     async def update_settings(
-        request, org_id: UUID, data: OrganizationSettingsUpdateSchema
+        request, org_id: UUID, body: OrganizationSettingsUpdateSchema
     ) -> OrganizationSettingsSchema:
         """Update organization settings (admin only)."""
         membership = await require_admin(request.user, org_id)
@@ -246,7 +245,7 @@ class OrganizationController(APIController):
 
         # Merge new settings with existing
         settings = org.settings or {}
-        update_data = data.model_dump(exclude_unset=True)
+        update_data = body.model_dump(exclude_unset=True)
         settings.update(update_data)
         org.settings = settings
         await org.asave()
@@ -291,19 +290,19 @@ class TeamController(APIController):
 
     @staticmethod
     @jwt_required
-    async def create_team(request, org_id: UUID, data: TeamCreateSchema) -> TeamSchema:
+    async def create_team(request, org_id: UUID, body: TeamCreateSchema) -> TeamSchema:
         """Create a new team (admin only)."""
         await require_admin(request.user, org_id)
 
         # Check if slug is taken in this org
-        if await Team.objects.filter(organization_id=org_id, slug=data.slug).aexists():
+        if await Team.objects.filter(organization_id=org_id, slug=body.slug).aexists():
             raise ValidationAPIError("Team slug already taken in this organization")
 
         team = await Team.objects.acreate(
             organization_id=org_id,
-            name=data.name,
-            slug=data.slug,
-            description=data.description,
+            name=body.name,
+            slug=body.slug,
+            description=body.description,
         )
 
         return TeamSchema(
@@ -346,7 +345,7 @@ class TeamController(APIController):
     @staticmethod
     @jwt_required
     async def update_team(
-        request, org_id: UUID, team_id: UUID, data: TeamUpdateSchema
+        request, org_id: UUID, team_id: UUID, body: TeamUpdateSchema
     ) -> TeamSchema:
         """Update a team (admin only)."""
         await require_admin(request.user, org_id)
@@ -356,7 +355,7 @@ class TeamController(APIController):
         except Team.DoesNotExist:
             raise NotFoundAPIError("Team not found")
 
-        update_data = data.model_dump(exclude_unset=True)
+        update_data = body.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(team, field, value)
 
@@ -389,7 +388,7 @@ class TeamController(APIController):
     @staticmethod
     @jwt_required
     async def add_member_to_team(
-        request, org_id: UUID, team_id: UUID, data: TeamMemberAddSchema
+        request, org_id: UUID, team_id: UUID, body: TeamMemberAddSchema
     ) -> TeamDetailSchema:
         """Add a member to a team (admin only)."""
         await require_admin(request.user, org_id)
@@ -401,7 +400,7 @@ class TeamController(APIController):
 
         try:
             membership = await Membership.objects.select_related("user", "organization").aget(
-                id=data.member_id, organization_id=org_id, is_active=True
+                id=body.member_id, organization_id=org_id, is_active=True
             )
         except Membership.DoesNotExist:
             raise NotFoundAPIError("Member not found")
@@ -425,9 +424,7 @@ class TeamController(APIController):
             raise NotFoundAPIError("Team not found")
 
         try:
-            membership = await Membership.objects.aget(
-                id=member_id, organization_id=org_id
-            )
+            membership = await Membership.objects.aget(id=member_id, organization_id=org_id)
         except Membership.DoesNotExist:
             raise NotFoundAPIError("Member not found")
 
@@ -477,7 +474,7 @@ class MemberController(APIController):
     @staticmethod
     @jwt_required
     async def update_member(
-        request, org_id: UUID, member_id: UUID, data: MembershipUpdateSchema
+        request, org_id: UUID, member_id: UUID, body: MembershipUpdateSchema
     ) -> MembershipSchema:
         """Update a member's role/info (admin only)."""
         admin_membership = await require_admin(request.user, org_id)
@@ -490,11 +487,11 @@ class MemberController(APIController):
             raise NotFoundAPIError("Member not found")
 
         # Can't change owner's role unless you're also an owner
-        if membership.is_owner and data.role and data.role != MembershipRole.OWNER:
+        if membership.is_owner and body.role and body.role != MembershipRole.OWNER:
             if not admin_membership.is_owner:
                 raise ValidationAPIError("Only owners can change another owner's role")
 
-        update_data = data.model_dump(exclude_unset=True)
+        update_data = body.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(membership, field, value)
 
@@ -505,7 +502,7 @@ class MemberController(APIController):
     @jwt_required
     async def remove_member(request, org_id: UUID, member_id: UUID) -> dict:
         """Remove a member from organization (admin only)."""
-        admin_membership = await require_admin(request.user, org_id)
+        await require_admin(request.user, org_id)
 
         try:
             membership = await Membership.objects.aget(id=member_id, organization_id=org_id)
@@ -613,7 +610,7 @@ class InvitationController(APIController):
     @staticmethod
     @jwt_required
     async def create_invitation(
-        request, org_id: UUID, data: InvitationCreateSchema
+        request, org_id: UUID, body: InvitationCreateSchema
     ) -> InvitationSchema:
         """Invite a user to organization (admin only)."""
         membership = await require_admin(request.user, org_id)
@@ -621,13 +618,13 @@ class InvitationController(APIController):
 
         # Check if user already a member
         if await User.objects.filter(
-            email=data.email, memberships__organization_id=org_id
+            email=body.email, memberships__organization_id=org_id
         ).aexists():
             raise ValidationAPIError("User is already a member")
 
         # Check for existing pending invitation
         if await Invitation.objects.filter(
-            email=data.email, organization_id=org_id, status=InvitationStatus.PENDING
+            email=body.email, organization_id=org_id, status=InvitationStatus.PENDING
         ).aexists():
             raise ValidationAPIError("Invitation already pending for this email")
 
@@ -635,7 +632,7 @@ class InvitationController(APIController):
         settings = org.settings or {}
         allowed_domains = settings.get("allowed_email_domains", [])
         if allowed_domains:
-            email_domain = data.email.split("@")[1]
+            email_domain = body.email.split("@")[1]
             if email_domain not in allowed_domains:
                 raise ValidationAPIError(
                     f"Email domain not allowed. Allowed domains: {', '.join(allowed_domains)}"
@@ -644,17 +641,17 @@ class InvitationController(APIController):
         expiry_days = getattr(django_settings, "INVITATION_EXPIRY_DAYS", 7)
         invitation = await Invitation.objects.acreate(
             organization_id=org_id,
-            email=data.email,
-            role=data.role,
-            message=data.message,
+            email=body.email,
+            role=body.role,
+            message=body.message,
             invited_by=request.user,
             token=secrets.token_urlsafe(32),
             expires_at=timezone.now() + timedelta(days=expiry_days),
         )
 
         # Add teams if specified
-        if data.team_ids:
-            teams = Team.objects.filter(id__in=data.team_ids, organization_id=org_id)
+        if body.team_ids:
+            teams = Team.objects.filter(id__in=body.team_ids, organization_id=org_id)
             async for team in teams:
                 await invitation.teams.aadd(team)
 
@@ -675,10 +672,9 @@ class InvitationController(APIController):
 
     @staticmethod
     @jwt_required
-    async def bulk_invite(request, org_id: UUID, data: BulkInviteSchema) -> BulkInviteResultSchema:
+    async def bulk_invite(request, org_id: UUID, body: BulkInviteSchema) -> BulkInviteResultSchema:
         """Bulk invite users (admin only)."""
-        membership = await require_admin(request.user, org_id)
-        org = membership.organization
+        await require_admin(request.user, org_id)
 
         sent = 0
         failed = 0
@@ -686,7 +682,7 @@ class InvitationController(APIController):
 
         expiry_days = getattr(django_settings, "INVITATION_EXPIRY_DAYS", 7)
 
-        for email in data.emails:
+        for email in body.emails:
             try:
                 # Check if user already a member
                 if await User.objects.filter(
@@ -707,8 +703,8 @@ class InvitationController(APIController):
                 await Invitation.objects.acreate(
                     organization_id=org_id,
                     email=email,
-                    role=data.role,
-                    message=data.message,
+                    role=body.role,
+                    message=body.message,
                     invited_by=request.user,
                     token=secrets.token_urlsafe(32),
                     expires_at=timezone.now() + timedelta(days=expiry_days),
@@ -800,9 +796,7 @@ class InvitationController(APIController):
     async def decline_invitation(request, token: str) -> dict:
         """Decline an invitation."""
         try:
-            invitation = await Invitation.objects.aget(
-                token=token, status=InvitationStatus.PENDING
-            )
+            invitation = await Invitation.objects.aget(token=token, status=InvitationStatus.PENDING)
         except Invitation.DoesNotExist:
             raise NotFoundAPIError("Invalid or expired invitation")
 
@@ -834,7 +828,7 @@ class InvitationController(APIController):
     @jwt_required
     async def resend_invitation(request, org_id: UUID, invitation_id: UUID) -> InvitationSchema:
         """Resend an invitation (admin only)."""
-        membership = await require_admin(request.user, org_id)
+        await require_admin(request.user, org_id)
 
         try:
             invitation = await Invitation.objects.select_related("organization").aget(
@@ -873,111 +867,113 @@ def register_org_routes(api: MattAPI) -> None:
     """Register organization routes on the API."""
 
     # Organizations
-    api.get("/organizations", response=list[OrganizationWithRoleSchema], tags=["Organizations"])(
-        OrganizationController.list_organizations
-    )
-    api.post("/organizations", response=OrganizationSchema, tags=["Organizations"])(
+    api.get(
+        "organizations", response_model=list[OrganizationWithRoleSchema], tags=["Organizations"]
+    )(OrganizationController.list_organizations)
+    api.post("organizations", response_model=OrganizationSchema, tags=["Organizations"])(
         OrganizationController.create_organization
     )
-    api.get("/organizations/{org_id}", response=OrganizationSchema, tags=["Organizations"])(
+    api.get("organizations/{org_id}", response_model=OrganizationSchema, tags=["Organizations"])(
         OrganizationController.get_organization
     )
-    api.patch("/organizations/{org_id}", response=OrganizationSchema, tags=["Organizations"])(
+    api.patch("organizations/{org_id}", response_model=OrganizationSchema, tags=["Organizations"])(
         OrganizationController.update_organization
     )
-    api.delete("/organizations/{org_id}", tags=["Organizations"])(
+    api.delete("organizations/{org_id}", tags=["Organizations"])(
         OrganizationController.delete_organization
     )
 
     # Organization settings
     api.get(
-        "/organizations/{org_id}/settings",
-        response=OrganizationSettingsSchema,
+        "organizations/{org_id}/settings",
+        response_model=OrganizationSettingsSchema,
         tags=["Organizations"],
     )(OrganizationController.get_settings)
     api.patch(
-        "/organizations/{org_id}/settings",
-        response=OrganizationSettingsSchema,
+        "organizations/{org_id}/settings",
+        response_model=OrganizationSettingsSchema,
         tags=["Organizations"],
     )(OrganizationController.update_settings)
 
     # Teams
-    api.get("/organizations/{org_id}/teams", response=list[TeamSchema], tags=["Teams"])(
+    api.get("organizations/{org_id}/teams", response_model=list[TeamSchema], tags=["Teams"])(
         TeamController.list_teams
     )
-    api.post("/organizations/{org_id}/teams", response=TeamSchema, tags=["Teams"])(
+    api.post("organizations/{org_id}/teams", response_model=TeamSchema, tags=["Teams"])(
         TeamController.create_team
     )
-    api.get("/organizations/{org_id}/teams/{team_id}", response=TeamDetailSchema, tags=["Teams"])(
-        TeamController.get_team
-    )
-    api.patch("/organizations/{org_id}/teams/{team_id}", response=TeamSchema, tags=["Teams"])(
+    api.get(
+        "organizations/{org_id}/teams/{team_id}", response_model=TeamDetailSchema, tags=["Teams"]
+    )(TeamController.get_team)
+    api.patch("organizations/{org_id}/teams/{team_id}", response_model=TeamSchema, tags=["Teams"])(
         TeamController.update_team
     )
-    api.delete("/organizations/{org_id}/teams/{team_id}", tags=["Teams"])(
-        TeamController.delete_team
-    )
+    api.delete("organizations/{org_id}/teams/{team_id}", tags=["Teams"])(TeamController.delete_team)
     api.post(
-        "/organizations/{org_id}/teams/{team_id}/members",
-        response=TeamDetailSchema,
+        "organizations/{org_id}/teams/{team_id}/members",
+        response_model=TeamDetailSchema,
         tags=["Teams"],
     )(TeamController.add_member_to_team)
     api.delete(
-        "/organizations/{org_id}/teams/{team_id}/members/{member_id}",
-        response=TeamDetailSchema,
+        "organizations/{org_id}/teams/{team_id}/members/{member_id}",
+        response_model=TeamDetailSchema,
         tags=["Teams"],
     )(TeamController.remove_member_from_team)
 
     # Members
-    api.get("/organizations/{org_id}/members", response=list[MembershipSchema], tags=["Members"])(
-        MemberController.list_members
-    )
     api.get(
-        "/organizations/{org_id}/members/{member_id}", response=MembershipSchema, tags=["Members"]
+        "organizations/{org_id}/members", response_model=list[MembershipSchema], tags=["Members"]
+    )(MemberController.list_members)
+    api.get(
+        "organizations/{org_id}/members/{member_id}",
+        response_model=MembershipSchema,
+        tags=["Members"],
     )(MemberController.get_member)
     api.patch(
-        "/organizations/{org_id}/members/{member_id}", response=MembershipSchema, tags=["Members"]
+        "organizations/{org_id}/members/{member_id}",
+        response_model=MembershipSchema,
+        tags=["Members"],
     )(MemberController.update_member)
-    api.delete("/organizations/{org_id}/members/{member_id}", tags=["Members"])(
+    api.delete("organizations/{org_id}/members/{member_id}", tags=["Members"])(
         MemberController.remove_member
     )
-    api.post("/organizations/{org_id}/leave", tags=["Members"])(MemberController.leave_organization)
+    api.post("organizations/{org_id}/leave", tags=["Members"])(MemberController.leave_organization)
     api.post(
-        "/organizations/{org_id}/transfer-ownership/{member_id}",
-        response=MembershipSchema,
+        "organizations/{org_id}/transfer-ownership/{member_id}",
+        response_model=MembershipSchema,
         tags=["Members"],
     )(MemberController.transfer_ownership)
 
     # Invitations
     api.get(
-        "/organizations/{org_id}/invitations",
-        response=list[InvitationSchema],
+        "organizations/{org_id}/invitations",
+        response_model=list[InvitationSchema],
         tags=["Invitations"],
     )(InvitationController.list_invitations)
     api.post(
-        "/organizations/{org_id}/invitations", response=InvitationSchema, tags=["Invitations"]
+        "organizations/{org_id}/invitations", response_model=InvitationSchema, tags=["Invitations"]
     )(InvitationController.create_invitation)
     api.post(
-        "/organizations/{org_id}/invitations/bulk",
-        response=BulkInviteResultSchema,
+        "organizations/{org_id}/invitations/bulk",
+        response_model=BulkInviteResultSchema,
         tags=["Invitations"],
     )(InvitationController.bulk_invite)
-    api.delete("/organizations/{org_id}/invitations/{invitation_id}", tags=["Invitations"])(
+    api.delete("organizations/{org_id}/invitations/{invitation_id}", tags=["Invitations"])(
         InvitationController.cancel_invitation
     )
     api.post(
-        "/organizations/{org_id}/invitations/{invitation_id}/resend",
-        response=InvitationSchema,
+        "organizations/{org_id}/invitations/{invitation_id}/resend",
+        response_model=InvitationSchema,
         tags=["Invitations"],
     )(InvitationController.resend_invitation)
 
     # User invitations
-    api.get("/invitations", response=list[InvitationSchema], tags=["Invitations"])(
+    api.get("invitations", response_model=list[InvitationSchema], tags=["Invitations"])(
         InvitationController.get_my_invitations
     )
-    api.post("/invitations/{token}/accept", response=MembershipSchema, tags=["Invitations"])(
+    api.post("invitations/{token}/accept", response_model=MembershipSchema, tags=["Invitations"])(
         InvitationController.accept_invitation
     )
-    api.post("/invitations/{token}/decline", tags=["Invitations"])(
+    api.post("invitations/{token}/decline", tags=["Invitations"])(
         InvitationController.decline_invitation
     )

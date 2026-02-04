@@ -40,6 +40,4 @@ class User(AbstractUser):
         """Get all organizations this user belongs to."""
         from apps.organizations.models import Organization
 
-        return Organization.objects.filter(
-            memberships__user=self, memberships__is_active=True
-        )
+        return Organization.objects.filter(memberships__user=self, memberships__is_active=True)

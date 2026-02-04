@@ -2,8 +2,8 @@
 
 from django_matt import MattAPI
 
-from apps.users.controllers import register_auth_routes
 from apps.organizations.controllers import register_org_routes
+from apps.users.controllers import register_auth_routes
 
 # Create the API instance
 api = MattAPI(
@@ -18,14 +18,14 @@ register_org_routes(api)
 
 
 # Health check endpoint
-@api.get("/health", tags=["Health"])
+@api.get("health", tags=["Health"])
 async def health_check(request) -> dict:
     """Health check endpoint."""
     return {"status": "healthy", "version": "1.0.0"}
 
 
 # Ready check (with database verification)
-@api.get("/ready", tags=["Health"])
+@api.get("ready", tags=["Health"])
 async def ready_check(request) -> dict:
     """Readiness check with database verification."""
     from django.db import connection

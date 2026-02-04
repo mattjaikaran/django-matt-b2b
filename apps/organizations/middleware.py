@@ -1,6 +1,5 @@
 """Tenant context middleware for multi-tenancy."""
 
-from typing import Optional
 from uuid import UUID
 
 from django.http import HttpRequest
@@ -14,19 +13,19 @@ class TenantContext:
 
     def __init__(
         self,
-        organization: Optional[Organization] = None,
-        membership: Optional[Membership] = None,
+        organization: Organization | None = None,
+        membership: Membership | None = None,
     ):
         self.organization = organization
         self.membership = membership
 
     @property
-    def org_id(self) -> Optional[UUID]:
+    def org_id(self) -> UUID | None:
         """Get current organization ID."""
         return self.organization.id if self.organization else None
 
     @property
-    def role(self) -> Optional[str]:
+    def role(self) -> str | None:
         """Get user's role in current organization."""
         return self.membership.role if self.membership else None
 
@@ -88,7 +87,7 @@ class TenantContextMiddleware(MiddlewareMixin):
             # User is not a member of this organization
             pass
 
-    def _get_org_id(self, request: HttpRequest) -> Optional[UUID]:
+    def _get_org_id(self, request: HttpRequest) -> UUID | None:
         """Extract organization ID from request."""
         # From header
         org_id = request.headers.get("X-Organization-ID")
@@ -108,7 +107,7 @@ class TenantContextMiddleware(MiddlewareMixin):
 
         return None
 
-    def _get_org_slug(self, request: HttpRequest) -> Optional[str]:
+    def _get_org_slug(self, request: HttpRequest) -> str | None:
         """Extract organization slug from request."""
         # From header
         return request.headers.get("X-Organization-Slug")
