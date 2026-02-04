@@ -98,7 +98,9 @@ def main() -> int:
         if line_count > MAX_LINES:
             errors.append(f"ERROR: {filepath} has {line_count} lines (max: {MAX_LINES})")
         elif line_count > WARNING_LINES:
-            warnings.append(f"WARNING: {filepath} has {line_count} lines (prefer < {WARNING_LINES})")
+            warnings.append(
+                f"WARNING: {filepath} has {line_count} lines (prefer < {WARNING_LINES})"
+            )
 
     # Print results
     for warning in warnings:
