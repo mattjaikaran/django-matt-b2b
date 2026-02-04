@@ -1,14 +1,15 @@
-"""User API controllers."""
+"""Authentication API controller."""
+
+from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
-from django_matt import MattAPI
 from django_matt.auth import create_token_pair, jwt_required
 from django_matt.auth.jwt import refresh_tokens
 from django_matt.core import APIController
 from django_matt.core.errors import APIError, ValidationAPIError
 
-from .schemas import (
+from ..schemas import (
     ChangePasswordSchema,
     LoginSchema,
     RefreshTokenSchema,
@@ -114,14 +115,3 @@ class AuthController(APIController):
         # In a stateless JWT system, logout is handled client-side
         # For enhanced security, implement token blacklisting
         return {"message": "Logged out successfully"}
-
-
-def register_auth_routes(api: MattAPI) -> None:
-    """Register auth routes on the API."""
-    api.post("auth/register", response_model=UserSchema, tags=["Auth"])(AuthController.register)
-    api.post("auth/login", response_model=TokenSchema, tags=["Auth"])(AuthController.login)
-    api.post("auth/refresh", response_model=TokenSchema, tags=["Auth"])(AuthController.refresh)
-    api.post("auth/logout", tags=["Auth"])(AuthController.logout)
-    api.get("auth/me", response_model=UserSchema, tags=["Auth"])(AuthController.me)
-    api.patch("auth/me", response_model=UserSchema, tags=["Auth"])(AuthController.update_me)
-    api.post("auth/change-password", tags=["Auth"])(AuthController.change_password)

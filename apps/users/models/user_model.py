@@ -1,7 +1,14 @@
 """Custom user model."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+if TYPE_CHECKING:
+    from django.db.models import QuerySet
 
 
 class User(AbstractUser):
@@ -36,7 +43,7 @@ class User(AbstractUser):
             return f"{self.first_name} {self.last_name}"
         return self.first_name or self.last_name or self.username
 
-    def get_organizations(self):
+    def get_organizations(self) -> QuerySet:
         """Get all organizations this user belongs to."""
         from apps.organizations.models import Organization
 
