@@ -217,7 +217,7 @@ dependencies = [
     { name = "uvicorn", extra = ["standard"] },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "django-stubs" },
     { name = "httpx" },
@@ -233,20 +233,23 @@ dev = [
 requires-dist = [
     { name = "django", specifier = ">=5.2" },
     { name = "django-matt", extras = ["full", "auth"], git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.0" },
-    { name = "django-stubs", marker = "extra == 'dev'", specifier = ">=5.0.0" },
     { name = "gunicorn", specifier = ">=22.0.0" },
-    { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.27.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0.0" },
-    { name = "pytest-django", marker = "extra == 'dev'", specifier = ">=4.8.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.4.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30.0" },
 ]
-provides-extras = ["dev"]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "django-stubs", specifier = ">=5.0.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
+    { name = "mypy", specifier = ">=1.10.0" },
+    { name = "pytest", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", specifier = ">=0.23.0" },
+    { name = "pytest-cov", specifier = ">=5.0.0" },
+    { name = "pytest-django", specifier = ">=4.8.0" },
+    { name = "ruff", specifier = ">=0.4.0" },
+]
 
 [[package]]
 name = "django-stubs"
