@@ -6,7 +6,7 @@ from uuid import UUID
 
 from django_matt.core.errors import APIError, NotFoundAPIError
 
-from ..models import Membership, MembershipRole
+from ..models import Membership
 from ..schemas import MembershipSchema
 
 

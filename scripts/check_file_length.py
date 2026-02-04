@@ -33,8 +33,6 @@ EXCLUDE_PATTERNS = [
 
 def should_check_file(filepath: Path) -> bool:
     """Check if file should be checked based on patterns."""
-    filepath_str = str(filepath)
-
     # Check exclude patterns
     for pattern in EXCLUDE_PATTERNS:
         if filepath.match(pattern):
