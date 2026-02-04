@@ -231,7 +231,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "django", specifier = ">=5.2" },
+    { name = "django", specifier = ">=6.0" },
     { name = "django-matt", extras = ["full", "auth"], git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.1" },
     { name = "gunicorn", specifier = ">=22.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1.0" },
