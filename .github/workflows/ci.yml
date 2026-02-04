@@ -79,6 +79,17 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
+      - name: Run migrations
+        env:
+          SECRET_KEY: test-secret-key-for-ci-workflow-minimum-32-chars
+          DEBUG: "false"
+          DB_NAME: test_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: uv run python manage.py migrate --no-input
+
       - name: Run tests
         env:
           SECRET_KEY: test-secret-key-for-ci-workflow-minimum-32-chars
