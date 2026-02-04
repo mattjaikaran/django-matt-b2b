@@ -21,7 +21,7 @@ A B2B multi-tenant Django API template built with [django-matt](https://github.c
 
 ### Prerequisites
 
-- Python 3.12+
+- Python 3.14+
 - [uv](https://github.com/astral-sh/uv) package manager
 - PostgreSQL (or use SQLite for development)
 
