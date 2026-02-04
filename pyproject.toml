@@ -5,7 +5,7 @@ description = "A B2B multi-tenant Django API built with django-matt"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "django>=5.2",
+    "django>=6.0",
     "django-matt[full,auth] @ git+ssh://git@github.com/mattjaikaran/django-matt.git@v0.1.1",
     "psycopg[binary]>=3.1.0",
     "python-dotenv>=1.0.0",

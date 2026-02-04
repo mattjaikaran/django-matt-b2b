@@ -4,7 +4,7 @@ A B2B multi-tenant Django API template built with [django-matt](https://github.c
 
 ## Features
 
-- Django 5.2+ with async support
+- Django 6.0+ with full async support
 - JWT authentication out of the box
 - Multi-tenant organization structure
 - Team management with role-based access
