@@ -7,9 +7,9 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from .membership_model import MembershipRole
-from .organization_model import Organization
-from .team_model import Team
+from .membership import MembershipRole
+from .organization import Organization
+from .team import Team
 
 
 class InvitationStatus(models.TextChoices):

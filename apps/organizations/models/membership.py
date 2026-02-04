@@ -7,8 +7,8 @@ import uuid
 from django.conf import settings
 from django.db import models
 
-from .organization_model import Organization
-from .team_model import Team
+from .organization import Organization
+from .team import Team
 
 
 class MembershipRole(models.TextChoices):

@@ -10,7 +10,7 @@ from django.db import models
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
-    from .membership_model import Membership
+    from .membership import Membership
 
 
 class Organization(models.Model):
@@ -53,13 +53,13 @@ class Organization(models.Model):
 
     def get_owners(self) -> QuerySet[Membership]:
         """Get all owners of this organization."""
-        from .membership_model import MembershipRole
+        from .membership import MembershipRole
 
         return self.memberships.filter(role=MembershipRole.OWNER, is_active=True)
 
     def get_admins(self) -> QuerySet[Membership]:
         """Get all admins (including owners) of this organization."""
-        from .membership_model import MembershipRole
+        from .membership import MembershipRole
 
         return self.memberships.filter(
             role__in=[MembershipRole.OWNER, MembershipRole.ADMIN], is_active=True
