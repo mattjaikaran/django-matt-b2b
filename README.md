@@ -1,5 +1,10 @@
 # Django Matt B2B
 
+[![CI](https://github.com/mattjaikaran/django-matt-b2b/actions/workflows/ci.yml/badge.svg)](https://github.com/mattjaikaran/django-matt-b2b/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![Django 6.0+](https://img.shields.io/badge/django-6.0+-green.svg)](https://www.djangoproject.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A B2B multi-tenant Django API template built with [django-matt](https://github.com/mattjaikaran/django-matt).
 
 ## Features
@@ -21,7 +26,7 @@ A B2B multi-tenant Django API template built with [django-matt](https://github.c
 
 ### Prerequisites
 
-- Python 3.14+
+- Python 3.12+ (3.13 recommended)
 - [uv](https://github.com/astral-sh/uv) package manager
 - PostgreSQL (or use SQLite for development)
 
