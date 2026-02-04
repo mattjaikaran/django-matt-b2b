@@ -182,7 +182,7 @@ wheels = [
 [[package]]
 name = "django-matt"
 version = "0.1.0"
-source = { git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.0#523fa658fef5f7c8ae580a3dbd73a9dcd925e6ee" }
+source = { git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.1#1aae192b831621b9fecf8679ace76deaee060ff2" }
 dependencies = [
     { name = "django" },
     { name = "email-validator" },
@@ -232,7 +232,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "django", specifier = ">=5.2" },
-    { name = "django-matt", extras = ["full", "auth"], git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.0" },
+    { name = "django-matt", extras = ["full", "auth"], git = "ssh://git@github.com/mattjaikaran/django-matt.git?rev=v0.1.1" },
     { name = "gunicorn", specifier = ">=22.0.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.1.0" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
