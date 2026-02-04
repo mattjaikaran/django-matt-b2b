@@ -1,5 +1,7 @@
 """Pydantic schemas for organization endpoints."""
 
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import UUID
 
@@ -103,7 +105,7 @@ class TeamUpdateSchema(BaseModel):
 class TeamDetailSchema(TeamSchema):
     """Team with member details."""
 
-    members: list["MembershipSchema"] = []
+    members: list[MembershipSchema] = []
 
 
 # =============================================================================
