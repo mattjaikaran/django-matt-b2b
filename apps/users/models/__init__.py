@@ -1,5 +1,5 @@
 """User models package."""
 
-from .user_model import User
+from .user import User
 
 __all__ = ["User"]

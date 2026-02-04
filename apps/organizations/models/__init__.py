@@ -1,9 +1,9 @@
 """Organization models package."""
 
-from .invitation_model import Invitation, InvitationStatus
-from .membership_model import Membership, MembershipRole
-from .organization_model import Organization
-from .team_model import Team
+from .invitation import Invitation, InvitationStatus
+from .membership import Membership, MembershipRole
+from .organization import Organization
+from .team import Team
 
 __all__ = [
     "Organization",
