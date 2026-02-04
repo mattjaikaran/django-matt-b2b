@@ -3,7 +3,7 @@ name = "django-matt-b2b"
 version = "0.1.0"
 description = "A B2B multi-tenant Django API built with django-matt"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
     "django>=6.0",
     "django-matt[full,auth] @ git+ssh://git@github.com/mattjaikaran/django-matt.git@v0.1.1",
@@ -37,7 +37,7 @@ packages = ["apps", "config"]
 
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+target-version = "py312"
 exclude = ["**/migrations/*", "scripts/*"]
 
 [tool.ruff.lint]
@@ -51,7 +51,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 
 [tool.mypy]
-python_version = "3.14"
+python_version = "3.12"
 plugins = ["mypy_django_plugin.main"]
 ignore_missing_imports = true
 
