@@ -1,6 +1,19 @@
+# =============================================================================
+# Django Matt B2B - Docker Compose Configuration
+# =============================================================================
+# Usage:
+#   Development:  docker compose up -d db redis
+#   Full stack:   docker compose up -d
+#   With dev:     docker compose --profile dev up
+
 services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Database
+  # ---------------------------------------------------------------------------
   db:
     image: postgres:16-alpine
+    container_name: django-matt-b2b-db
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -8,30 +21,47 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "${DB_PORT:-5432}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres}"]
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-django_matt_b2b}"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
+  # ---------------------------------------------------------------------------
+  # Redis (Caching & Background Tasks)
+  # ---------------------------------------------------------------------------
   redis:
     image: redis:7-alpine
+    container_name: django-matt-b2b-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
 
+  # ---------------------------------------------------------------------------
+  # API (Production)
+  # ---------------------------------------------------------------------------
   api:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django-matt-b2b-api
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       - DEBUG=False
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1}
       - DB_NAME=${DB_NAME:-django_matt_b2b}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
@@ -45,29 +75,55 @@ services:
         condition: service_healthy
     volumes:
       - static_files:/app/staticfiles
+      - media_files:/app/mediafiles
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
-  # Development service with hot reload
+  # ---------------------------------------------------------------------------
+  # API (Development with hot reload)
+  # ---------------------------------------------------------------------------
   api-dev:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: django-matt-b2b-api-dev
     command: python manage.py runserver 0.0.0.0:8000
     ports:
       - "8000:8000"
     environment:
       - DEBUG=True
-      - SECRET_KEY=dev-secret-key
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - ALLOWED_HOSTS=*
       - DB_NAME=${DB_NAME:-django_matt_b2b}
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_HOST=db
       - DB_PORT=5432
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - .:/app
+      - /app/.venv  # Exclude venv from mount
     profiles:
       - dev
 
+# -----------------------------------------------------------------------------
+# Volumes
+# -----------------------------------------------------------------------------
 volumes:
   postgres_data:
+    name: django-matt-b2b-postgres
+  redis_data:
+    name: django-matt-b2b-redis
   static_files:
+    name: django-matt-b2b-static
+  media_files:
+    name: django-matt-b2b-media

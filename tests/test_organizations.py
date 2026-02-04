@@ -1,7 +1,8 @@
 """Tests for organization models and schemas."""
 
-import pytest
 from django.contrib.auth import get_user_model
+
+import pytest
 
 from apps.organizations.models import (
     Invitation,

@@ -1,72 +1,152 @@
-.PHONY: help install dev test lint format migrate run docker-up docker-down clean
+# =============================================================================
+# Django Matt B2B - Makefile
+# =============================================================================
+# Run `make help` to see all available commands
+
+.PHONY: help install dev run test lint format migrate shell docker-up docker-down clean
 
 # Default target
+.DEFAULT_GOAL := help
+
+# Colors for pretty output
+BLUE := \033[34m
+GREEN := \033[32m
+YELLOW := \033[33m
+RESET := \033[0m
+
+# -----------------------------------------------------------------------------
+# Help
+# -----------------------------------------------------------------------------
 help:
-	@echo "Available commands:"
-	@echo "  make install       - Install dependencies with uv"
-	@echo "  make dev           - Install dev dependencies"
-	@echo "  make run           - Run development server"
-	@echo "  make test          - Run tests"
-	@echo "  make lint          - Run linter"
-	@echo "  make format        - Format code"
-	@echo "  make migrate       - Run migrations"
-	@echo "  make migrations    - Create new migrations"
-	@echo "  make superuser     - Create superuser"
-	@echo "  make shell         - Open Django shell"
-	@echo "  make docker-up     - Start Docker containers (db + redis)"
-	@echo "  make docker-down   - Stop Docker containers"
-	@echo "  make docker-up-all - Start all Docker containers"
-	@echo "  make docker-dev    - Start Docker dev environment"
-	@echo "  make clean         - Clean up generated files"
-	@echo "  make sync-types    - Generate TypeScript types"
+	@echo ""
+	@echo "$(BLUE)Django Matt B2B$(RESET) - Available Commands"
+	@echo ""
+	@echo "$(GREEN)Setup:$(RESET)"
+	@echo "  make install        Install production dependencies"
+	@echo "  make dev            Install development dependencies"
+	@echo "  make setup          Full setup (install + migrate + superuser)"
+	@echo ""
+	@echo "$(GREEN)Development:$(RESET)"
+	@echo "  make run            Run development server"
+	@echo "  make shell          Open Django shell (iPython if available)"
+	@echo "  make dbshell        Open database shell"
+	@echo ""
+	@echo "$(GREEN)Database:$(RESET)"
+	@echo "  make migrate        Run database migrations"
+	@echo "  make migrations     Create new migrations"
+	@echo "  make superuser      Create a superuser"
+	@echo "  make seed           Seed database with sample data"
+	@echo ""
+	@echo "$(GREEN)Testing:$(RESET)"
+	@echo "  make test           Run tests with coverage"
+	@echo "  make test-fast      Run tests without coverage"
+	@echo "  make test-watch     Run tests in watch mode"
+	@echo ""
+	@echo "$(GREEN)Code Quality:$(RESET)"
+	@echo "  make lint           Run linter (ruff + mypy)"
+	@echo "  make format         Format code with ruff"
+	@echo "  make check          Run all checks (lint + test)"
+	@echo "  make pre-commit     Run pre-commit hooks"
+	@echo ""
+	@echo "$(GREEN)Docker:$(RESET)"
+	@echo "  make docker-up      Start database and Redis"
+	@echo "  make docker-down    Stop all containers"
+	@echo "  make docker-all     Start all services (including API)"
+	@echo "  make docker-dev     Start dev environment with hot reload"
+	@echo "  make docker-build   Build Docker images"
+	@echo "  make docker-logs    View container logs"
+	@echo "  make docker-clean   Remove all containers and volumes"
+	@echo ""
+	@echo "$(GREEN)Utilities:$(RESET)"
+	@echo "  make sync-types     Generate TypeScript types"
+	@echo "  make clean          Clean generated files"
+	@echo "  make requirements   Export requirements.txt"
+	@echo ""
 
-# Install dependencies
+# -----------------------------------------------------------------------------
+# Setup
+# -----------------------------------------------------------------------------
 install:
-	uv pip install -e .
+	uv sync
 
-# Install dev dependencies
 dev:
-	uv pip install -e ".[dev]"
+	uv sync --dev
 
-# Run development server
+setup: install migrate
+	@echo "$(GREEN)Setup complete!$(RESET)"
+	@echo "Run 'make superuser' to create an admin user"
+	@echo "Run 'make run' to start the development server"
+
+# -----------------------------------------------------------------------------
+# Development
+# -----------------------------------------------------------------------------
 run:
-	python manage.py runserver
+	uv run python manage.py runserver
 
-# Run tests
-test:
-	pytest -v --cov=apps --cov-report=term-missing
+shell:
+	uv run python manage.py shell
 
-# Run linter
-lint:
-	ruff check .
-	mypy apps/
+dbshell:
+	uv run python manage.py dbshell
 
-# Format code
-format:
-	ruff format .
-	ruff check --fix .
-
-# Create migrations
+# -----------------------------------------------------------------------------
+# Database
+# -----------------------------------------------------------------------------
 migrations:
-	python manage.py makemigrations
+	uv run python manage.py makemigrations
 
-# Run migrations
 migrate:
-	python manage.py migrate
+	uv run python manage.py migrate
 
-# Create superuser
 superuser:
-	python manage.py createsuperuser
+	uv run python manage.py createsuperuser
 
-# Docker commands
+seed:
+	uv run python manage.py seed_data
+
+# -----------------------------------------------------------------------------
+# Testing
+# -----------------------------------------------------------------------------
+test:
+	uv run pytest -v --cov=apps --cov-report=term-missing --cov-report=html
+
+test-fast:
+	uv run pytest -v
+
+test-watch:
+	uv run pytest-watch
+
+# -----------------------------------------------------------------------------
+# Code Quality
+# -----------------------------------------------------------------------------
+lint:
+	uv run ruff check .
+	uv run mypy apps/ --ignore-missing-imports
+
+format:
+	uv run ruff format .
+	uv run ruff check --fix .
+
+check: lint test
+	@echo "$(GREEN)All checks passed!$(RESET)"
+
+pre-commit:
+	uv run pre-commit run --all-files
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
 docker-up:
 	docker compose up -d db redis
-
-docker-up-all:
-	docker compose up -d
+	@echo "$(GREEN)Database and Redis started$(RESET)"
+	@echo "PostgreSQL: localhost:5432"
+	@echo "Redis: localhost:6379"
 
 docker-down:
 	docker compose down
+
+docker-all:
+	docker compose up -d
 
 docker-dev:
 	docker compose --profile dev up
@@ -77,22 +157,24 @@ docker-build:
 docker-logs:
 	docker compose logs -f
 
-# Clean up
-clean:
-	find . -type d -name "__pycache__" -exec rm -rf {} +
-	find . -type f -name "*.pyc" -delete
-	find . -type f -name ".coverage" -delete
-	rm -rf .pytest_cache/
-	rm -rf .mypy_cache/
-	rm -rf .ruff_cache/
-	rm -rf htmlcov/
-	rm -rf dist/
-	rm -rf *.egg-info/
+docker-clean:
+	docker compose down -v --remove-orphans
+	@echo "$(YELLOW)All containers and volumes removed$(RESET)"
 
-# Generate types for frontend
+# -----------------------------------------------------------------------------
+# Utilities
+# -----------------------------------------------------------------------------
 sync-types:
-	python manage.py sync_types --target typescript --output ../frontend/src/types
+	uv run python manage.py sync_types --target typescript --output ./types
 
-# Shell
-shell:
-	python manage.py shell
+clean:
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	find . -type f -name ".coverage" -delete 2>/dev/null || true
+	rm -rf .pytest_cache/ .mypy_cache/ .ruff_cache/ htmlcov/ dist/ *.egg-info/
+	@echo "$(GREEN)Cleaned!$(RESET)"
+
+requirements:
+	uv pip compile pyproject.toml -o requirements.txt
+	uv pip compile pyproject.toml --extra dev -o requirements-dev.txt
+	@echo "$(GREEN)Generated requirements.txt and requirements-dev.txt$(RESET)"

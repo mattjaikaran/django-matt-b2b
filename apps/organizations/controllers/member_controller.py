@@ -5,6 +5,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from django.db import transaction
+
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
 from django_matt.core.errors import NotFoundAPIError, ValidationAPIError

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import check_password, make_password
+
 from django_matt.auth import create_token_pair, jwt_required
 from django_matt.auth.jwt import refresh_tokens
 from django_matt.core import APIController

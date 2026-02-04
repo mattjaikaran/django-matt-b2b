@@ -10,6 +10,7 @@ from django.conf import settings as django_settings
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
+
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
 from django_matt.core.errors import APIError, NotFoundAPIError, ValidationAPIError

@@ -1,12 +1,14 @@
-# Byte-compiled / optimized / DLL files
+# =============================================================================
+# Django Matt B2B - Git Ignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
-
-# C extensions
 *.so
-
-# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -23,16 +25,23 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# PyInstaller
-*.manifest
-*.spec
+# -----------------------------------------------------------------------------
+# Virtual Environments
+# -----------------------------------------------------------------------------
+.env
+.venv/
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.python-version
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Unit test / coverage reports
+# -----------------------------------------------------------------------------
+# Testing & Coverage
+# -----------------------------------------------------------------------------
 htmlcov/
 .tox/
 .nox/
@@ -47,95 +56,115 @@ coverage.xml
 .pytest_cache/
 pytest_cache/
 
-# Translations
-*.mo
-*.pot
+# -----------------------------------------------------------------------------
+# Type Checking
+# -----------------------------------------------------------------------------
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
 
-# Django stuff:
+# -----------------------------------------------------------------------------
+# Linting
+# -----------------------------------------------------------------------------
+.ruff_cache/
+
+# -----------------------------------------------------------------------------
+# Django
+# -----------------------------------------------------------------------------
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 staticfiles/
 mediafiles/
+*.pot
+*.mo
 
-# Flask stuff:
-instance/
-.webassets-cache
-
-# Scrapy stuff:
-.scrapy
-
-# Sphinx documentation
-docs/_build/
-
-# PyBuilder
-target/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# IPython
-profile_default/
-ipython_config.py
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# Ruff
-.ruff_cache/
-
-# IDE
+# -----------------------------------------------------------------------------
+# IDE & Editors
+# -----------------------------------------------------------------------------
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
+.spyderproject
+.spyproject
+.ropeproject
 
-# OS
+# -----------------------------------------------------------------------------
+# AI IDE Tools
+# -----------------------------------------------------------------------------
+.claude/
+.cursor/
+.aider*
+.continue/
+.copilot/
+
+# -----------------------------------------------------------------------------
+# OS Files
+# -----------------------------------------------------------------------------
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Project specific
+# -----------------------------------------------------------------------------
+# Secrets & Credentials
+# -----------------------------------------------------------------------------
 *.pem
 *.key
+*.crt
+*.p12
+.env.local
+.env.*.local
+secrets/
+credentials/
+
+# -----------------------------------------------------------------------------
+# Build & Deployment
+# -----------------------------------------------------------------------------
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+Pipfile.lock
+__pypackages__/
+celerybeat-schedule
+celerybeat.pid
+/site
+
+# -----------------------------------------------------------------------------
+# Documentation
+# -----------------------------------------------------------------------------
+docs/_build/
+site/
+
+# -----------------------------------------------------------------------------
+# Jupyter
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints
+profile_default/
+ipython_config.py
+
+# -----------------------------------------------------------------------------
+# Project Specific
+# -----------------------------------------------------------------------------
+# Generated types
+/types/
+
+# Uploaded files (if stored locally)
+/uploads/
+/media/
+
+# Backup files
+*.bak
+*.backup

@@ -1,7 +1,8 @@
 """Pytest configuration and fixtures."""
 
-import pytest
 from django.contrib.auth import get_user_model
+
+import pytest
 from django_matt.testing import APITestClient
 
 User = get_user_model()
