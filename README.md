@@ -66,7 +66,14 @@ make superuser
 # Or: python manage.py createsuperuser
 ```
 
-7. Run the development server:
+7. (Optional) Seed sample data with organizations, teams, and users:
+```bash
+python manage.py seed_data
+# Or with more organizations: python manage.py seed_data --orgs 3
+# Clear and reseed: python manage.py seed_data --clear
+```
+
+8. Run the development server:
 ```bash
 make run
 # Or: python manage.py runserver
@@ -208,6 +215,31 @@ django-matt-b2b/
 ├── .gitignore
 └── README.md
 ```
+
+## Seed Data
+
+Quickly populate your database with sample B2B data for development:
+
+```bash
+# Create organizations, teams, and users
+python manage.py seed_data
+
+# Create more organizations
+python manage.py seed_data --orgs 3
+
+# Clear existing data and reseed
+python manage.py seed_data --clear
+```
+
+**Default Credentials:**
+- Admin (org owner): `admin@example.com` / `admin123`
+- Team members: `alice@example.com` / `password123`
+- Team members: `bob@example.com` / `password123`
+
+**Created Data:**
+- 2 organizations (Acme Corporation, Startup Labs)
+- Multiple teams per organization (Engineering, Product, Marketing, etc.)
+- Users with various roles (owner, admin, member, viewer)
 
 ## Roles & Permissions
 
