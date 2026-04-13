@@ -64,14 +64,9 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 # Expose port
 EXPOSE 8000
 
-# Run with gunicorn (production WSGI server)
-CMD ["gunicorn", "config.wsgi:application", \
-    "--bind", "0.0.0.0:8000", \
+# Run with Granian (Rust ASGI server)
+CMD ["granian", "--interface", "asgi", "config.asgi:application", \
+    "--host", "0.0.0.0", \
+    "--port", "8000", \
     "--workers", "4", \
-    "--threads", "2", \
-    "--worker-class", "gthread", \
-    "--worker-tmp-dir", "/dev/shm", \
-    "--access-logfile", "-", \
-    "--error-logfile", "-", \
-    "--capture-output", \
-    "--enable-stdio-inheritance"]
+    "--http", "auto"]
