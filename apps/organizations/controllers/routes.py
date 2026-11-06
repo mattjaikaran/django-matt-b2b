@@ -20,10 +20,10 @@ from .organization_controller import OrganizationController
 from .team_controller import TeamController
 
 if TYPE_CHECKING:
-    from django_matt import MattAPI
+    from django_matt import DjangoMattAPI
 
 
-def register_org_routes(api: MattAPI) -> None:
+def register_org_routes(api: DjangoMattAPI) -> None:
     """Register organization routes on the API."""
 
     # Organizations
