@@ -176,7 +176,7 @@ Once running, visit:
 ```
 django-matt-b2b/
 ├── apps/
-│   ├── api.py                     # MattAPI initialization
+│   ├── api.py                     # DjangoMattAPI initialization
 │   ├── core/
 │   │   ├── __init__.py
 │   │   └── models.py              # Base models (TimestampMixin, etc.)

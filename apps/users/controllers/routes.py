@@ -8,10 +8,10 @@ from ..schemas import TokenSchema, UserSchema
 from .auth_controller import AuthController
 
 if TYPE_CHECKING:
-    from django_matt import MattAPI
+    from django_matt import DjangoMattAPI
 
 
-def register_auth_routes(api: MattAPI) -> None:
+def register_auth_routes(api: DjangoMattAPI) -> None:
     """Register auth routes on the API."""
     api.post("auth/register", response_model=UserSchema, tags=["Auth"])(AuthController.register)
     api.post("auth/login", response_model=TokenSchema, tags=["Auth"])(AuthController.login)

@@ -1,12 +1,12 @@
 """API configuration and routes."""
 
-from django_matt import MattAPI
+from django_matt import DjangoMattAPI
 
 from apps.organizations.controllers import register_org_routes
 from apps.users.controllers import register_auth_routes
 
 # Create the API instance
-api = MattAPI(
+api = DjangoMattAPI(
     title="Django Matt B2B API",
     version="1.0.0",
     description="A B2B multi-tenant API built with django-matt",
