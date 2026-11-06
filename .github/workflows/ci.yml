@@ -134,3 +134,43 @@ jobs:
       - name: Run mypy
         run: uv run mypy apps/ --ignore-missing-imports
         continue-on-error: true
+
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the lint step diffs against the base branch
+
+      - name: Detect Django changes
+        id: changes
+        run: |
+          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+            | grep -Eq '(^|/)(migrations/|models(/|\.py)|config/|scripts/db/|scripts/baselines/|pyproject\.toml|uv\.lock)'; then
+            echo "django=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "django=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install uv
+        if: steps.changes.outputs.django == 'true'
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+
+      - name: Set up Python
+        if: steps.changes.outputs.django == 'true'
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Configure SSH for private repo access
+        if: steps.changes.outputs.django == 'true'
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Check migrations
+        if: steps.changes.outputs.django == 'true'
+        run: python3 scripts/db/check_migrations.py --base "origin/${{ github.base_ref }}"

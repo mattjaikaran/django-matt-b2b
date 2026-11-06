@@ -1,0 +1,125 @@
+{
+  "version": 2,
+  "count": 17,
+  "issues": [
+    {
+      "rule_id": "SM005",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(invitation.invited_by)",
+      "operation_index": 0
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.user)",
+      "operation_index": 1
+    },
+    {
+      "rule_id": "SM005",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.user)",
+      "operation_index": 1
+    },
+    {
+      "rule_id": "SM019",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.user)",
+      "operation_index": 1
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.organization)",
+      "operation_index": 2
+    },
+    {
+      "rule_id": "SM005",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.organization)",
+      "operation_index": 2
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(invitation.organization)",
+      "operation_index": 3
+    },
+    {
+      "rule_id": "SM005",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(invitation.organization)",
+      "operation_index": 3
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(team.organization)",
+      "operation_index": 4
+    },
+    {
+      "rule_id": "SM005",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(team.organization)",
+      "operation_index": 4
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.teams)",
+      "operation_index": 5
+    },
+    {
+      "rule_id": "SM023",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(membership.teams)",
+      "operation_index": 5
+    },
+    {
+      "rule_id": "SM001",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(invitation.teams)",
+      "operation_index": 6
+    },
+    {
+      "rule_id": "SM023",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AddField(invitation.teams)",
+      "operation_index": 6
+    },
+    {
+      "rule_id": "SM015",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AlterUniqueTogether(team)",
+      "operation_index": 7
+    },
+    {
+      "rule_id": "SM015",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "AlterUniqueTogether(membership)",
+      "operation_index": 8
+    },
+    {
+      "rule_id": "SM054",
+      "app_label": "organizations",
+      "migration_name": "0002_initial",
+      "operation": "Migration",
+      "operation_index": null
+    }
+  ]
+}

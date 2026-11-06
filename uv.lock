@@ -237,6 +237,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "django-safe-migrations" },
     { name = "django-stubs" },
     { name = "httpx" },
     { name = "mypy" },
@@ -261,6 +262,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "django-safe-migrations", specifier = "==0.7.1" },
     { name = "django-stubs", specifier = ">=5.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "mypy", specifier = ">=1.10.0" },
@@ -271,6 +273,18 @@ dev = [
     { name = "pytest-django", specifier = ">=4.8.0" },
     { name = "pytest-xdist", specifier = ">=3.5.0" },
     { name = "ruff", specifier = ">=0.8.0" },
+]
+
+[[package]]
+name = "django-safe-migrations"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cb/a1/88b7c68ab3bb338edcddc44f099bb6fd03e49b5784b3bd5f214017c6ae87/django_safe_migrations-0.7.1.tar.gz", hash = "sha256:45548dfad05fccafb4c3b36ce076598bf11eb8f6c984f406bc020651b7688995", size = 261739, upload-time = "2026-06-04T23:53:54.276Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c7/53/39ed34371895d2bb0a5787c1e4a716070f9d0b7801a45fa4e9e7fb075b2f/django_safe_migrations-0.7.1-py3-none-any.whl", hash = "sha256:9be1cc93b2cd3c50defd7b21ae6fcda259e9e35a13d81d2a75d9da9c3d8f3555", size = 110413, upload-time = "2026-06-04T23:53:53.003Z" },
 ]
 
 [[package]]
