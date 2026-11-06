@@ -146,8 +146,10 @@ jobs:
 
       - name: Detect Django changes
         id: changes
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+          if git diff --name-only "origin/$BASE_REF...HEAD" \
             | grep -Eq '(^|/)(migrations/|models(/|\.py)|config/|scripts/db/|scripts/baselines/|pyproject\.toml|uv\.lock)'; then
             echo "django=true" >> "$GITHUB_OUTPUT"
           else
@@ -173,4 +175,6 @@ jobs:
 
       - name: Check migrations
         if: steps.changes.outputs.django == 'true'
-        run: python3 scripts/db/check_migrations.py --base "origin/${{ github.base_ref }}"
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: python3 scripts/db/check_migrations.py --base "origin/$BASE_REF"

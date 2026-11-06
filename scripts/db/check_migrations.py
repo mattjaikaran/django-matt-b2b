@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Migration checks for the pre-commit hook, the pre-push hook, the gauntlet
-MIGRATIONS gate and CI. Policy: migrations are linearized, never merged.
+"""Migration checks for the pre-commit hook and CI. Policy: migrations are
+linearized, never merged.
 
 Three checks, each with its own failure message:
 
