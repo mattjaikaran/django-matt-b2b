@@ -154,7 +154,9 @@ class Command(BaseCommand):
                 # Assign users to organization with different roles
                 roles = [MembershipRole.ADMIN, MembershipRole.MEMBER, MembershipRole.VIEWER]
                 start_idx = i * 2
-                org_users = users[start_idx : start_idx + 3] if start_idx < len(users) else users[:3]
+                org_users = (
+                    users[start_idx : start_idx + 3] if start_idx < len(users) else users[:3]
+                )
 
                 for j, user in enumerate(org_users):
                     role = roles[j % len(roles)]
