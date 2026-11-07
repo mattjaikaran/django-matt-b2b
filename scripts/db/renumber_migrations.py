@@ -80,7 +80,12 @@ def own_files(base: str) -> list[str]:
     found |= set(git("diff", "--name-only", "--no-renames", "--diff-filter=A", "HEAD").split())
     found |= set(git("ls-files", "-o", "--exclude-standard").split())
     on_base = set(git("ls-tree", "-r", "--name-only", base).split())
-    return sorted(p for p in found if PATH_RE.match(p) and p not in on_base)
+    # A path can be gone from the working tree: --apply already renamed it
+    # (rerun before the commit) or it is a staged delete. The live file at the
+    # renamed path carries the plan, so a missing one is not an own file.
+    return sorted(
+        p for p in found if PATH_RE.match(p) and p not in on_base and (ROOT / p).is_file()
+    )
 
 
 def base_infos(base: str, directory: str) -> dict[str, Info]:
