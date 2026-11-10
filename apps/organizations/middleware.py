@@ -1,5 +1,6 @@
 """Tenant context middleware for multi-tenancy."""
 
+from typing import cast
 from uuid import UUID
 
 from django.http import HttpRequest
@@ -40,6 +41,12 @@ class TenantContext:
         return self.membership.is_owner if self.membership else False
 
 
+class TenantHttpRequest(HttpRequest):
+    """Request annotated with the tenant context set by the middleware."""
+
+    tenant: TenantContext
+
+
 class TenantContextMiddleware(MiddlewareMixin):
     """
     Middleware to set tenant context based on request headers or URL.
@@ -54,7 +61,8 @@ class TenantContextMiddleware(MiddlewareMixin):
 
     def process_request(self, request: HttpRequest) -> None:
         """Process request and set tenant context."""
-        request.tenant = TenantContext()
+        tenant_request = cast(TenantHttpRequest, request)
+        tenant_request.tenant = TenantContext()
 
         # Skip if user is not authenticated
         if not hasattr(request, "user") or not request.user.is_authenticated:
@@ -78,7 +86,7 @@ class TenantContextMiddleware(MiddlewareMixin):
                     user=request.user, organization__slug=org_slug, is_active=True
                 )
 
-            request.tenant = TenantContext(
+            tenant_request.tenant = TenantContext(
                 organization=membership.organization,
                 membership=membership,
             )

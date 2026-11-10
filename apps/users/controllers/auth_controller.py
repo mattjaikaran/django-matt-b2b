@@ -65,14 +65,14 @@ class AuthController(APIController):
             raise APIError(status_code=401, message="Account is disabled")
 
         tokens = create_token_pair(user)
-        return TokenSchema(**tokens)
+        return TokenSchema(**tokens.model_dump())
 
     @staticmethod
     async def refresh(request, body: RefreshTokenSchema) -> TokenSchema:
         """Refresh access token."""
         try:
             tokens = refresh_tokens(body.refresh_token)
-            return TokenSchema(**tokens)
+            return TokenSchema(**tokens.model_dump())
         except Exception as e:
             raise APIError(status_code=401, message=str(e))
 

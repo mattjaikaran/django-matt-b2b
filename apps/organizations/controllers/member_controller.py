@@ -6,6 +6,7 @@ from uuid import UUID
 
 from django.db import transaction
 
+from asgiref.sync import sync_to_async
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
 from django_matt.core.errors import NotFoundAPIError, ValidationAPIError
@@ -133,13 +134,16 @@ class MemberController(APIController):
         except Membership.DoesNotExist:
             raise NotFoundAPIError("Member not found")
 
-        async with transaction.atomic():
-            # Make new member owner
-            new_owner.role = MembershipRole.OWNER
-            await new_owner.asave()
+        def _transfer() -> None:
+            with transaction.atomic():
+                # Make new member owner
+                new_owner.role = MembershipRole.OWNER
+                new_owner.save()
 
-            # Demote current owner to admin
-            current_membership.role = MembershipRole.ADMIN
-            await current_membership.asave()
+                # Demote current owner to admin
+                current_membership.role = MembershipRole.ADMIN
+                current_membership.save()
+
+        await sync_to_async(_transfer, thread_sensitive=True)()
 
         return build_membership_schema(new_owner)
