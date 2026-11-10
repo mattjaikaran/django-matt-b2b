@@ -59,6 +59,15 @@ repos:
         pass_filenames: false
         always_run: true
 
+      - id: check-agent-docs
+        name: Agent docs exist and links resolve
+        description: AGENTS.md is present, CLAUDE.md imports it, relative links resolve
+        entry: python3 scripts/check_agent_docs.py
+        language: system
+        files: '^(AGENTS\.md|CLAUDE\.md|docs/.*\.md|tasks/.*\.md|\.claude/skills/.*\.md)$'
+        pass_filenames: true
+        always_run: true
+
 ci:
   autofix_commit_msg: "ci: auto-fix pre-commit hooks"
   autoupdate_commit_msg: "ci: auto-update pre-commit hooks"

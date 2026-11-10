@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Check agent docs
+        run: python3 scripts/check_agent_docs.py
+
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:

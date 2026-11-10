@@ -3,7 +3,7 @@
 # =============================================================================
 # Run `make help` to see all available commands
 
-.PHONY: help install dev run test lint format migrate shell docker-up docker-down clean migrations-check migrations-renumber
+.PHONY: help install dev run test lint format migrate shell docker-up docker-down clean migrations-check migrations-renumber docs-check
 
 # Default target
 .DEFAULT_GOAL := help
@@ -49,6 +49,7 @@ help:
 	@echo "  make format         Format code with ruff"
 	@echo "  make check          Run all checks (lint + test)"
 	@echo "  make pre-commit     Run pre-commit hooks"
+	@echo "  make docs-check     Check AGENTS.md and its relative links"
 	@echo ""
 	@echo "$(GREEN)Docker:$(RESET)"
 	@echo "  make docker-up      Start database and Redis"
@@ -142,6 +143,10 @@ check: lint test
 
 pre-commit:
 	uv run pre-commit run --all-files
+
+# AGENTS.md exists, CLAUDE.md imports it, every relative link resolves.
+docs-check:
+	python3 scripts/check_agent_docs.py
 
 # -----------------------------------------------------------------------------
 # Docker
