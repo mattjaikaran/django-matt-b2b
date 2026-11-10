@@ -99,7 +99,12 @@ mediafiles/
 # -----------------------------------------------------------------------------
 # AI IDE Tools
 # -----------------------------------------------------------------------------
-.claude/
+# Shared agent config (skills, agents, settings) is committed; local overrides stay ignored.
+.claude/*
+!.claude/agents/
+!.claude/skills/
+!.claude/settings.json
+CLAUDE.local.md
 .cursor/
 .aider*
 .continue/
