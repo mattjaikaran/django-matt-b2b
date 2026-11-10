@@ -136,7 +136,6 @@ jobs:
 
       - name: Run mypy
         run: uv run mypy apps/ --ignore-missing-imports
-        continue-on-error: true
 
   migrations:
     name: Migrations

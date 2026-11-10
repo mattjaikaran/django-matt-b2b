@@ -29,17 +29,15 @@ class OrganizationAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Members")
     def member_count(self, obj):
         """Display member count."""
         return obj.member_count
 
-    member_count.short_description = "Members"
-
+    @admin.display(description="Teams")
     def team_count(self, obj):
         """Display team count."""
         return obj.team_count
-
-    team_count.short_description = "Teams"
 
 
 @admin.register(Team)
@@ -64,11 +62,10 @@ class TeamAdmin(admin.ModelAdmin):
         ),
     )
 
+    @admin.display(description="Members")
     def member_count(self, obj):
         """Display member count."""
         return obj.member_count
-
-    member_count.short_description = "Members"
 
 
 @admin.register(Membership)

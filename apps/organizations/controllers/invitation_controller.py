@@ -11,6 +11,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 from django.utils import timezone
 
+from asgiref.sync import sync_to_async
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
 from django_matt.core.errors import APIError, NotFoundAPIError, ValidationAPIError
@@ -222,21 +223,25 @@ class InvitationController(APIController):
         if invitation.email != request.user.email:
             raise APIError(status_code=403, message="Invitation is for a different email")
 
-        async with transaction.atomic():
-            # Create membership
-            membership = await Membership.objects.acreate(
-                user=request.user,
-                organization=invitation.organization,
-                role=invitation.role,
-            )
+        def _accept() -> Membership:
+            with transaction.atomic():
+                # Create membership
+                membership = Membership.objects.create(
+                    user=request.user,
+                    organization=invitation.organization,
+                    role=invitation.role,
+                )
 
-            # Add to teams if specified
-            async for team in invitation.teams.all():
-                await membership.teams.aadd(team)
+                # Add to teams if specified
+                for team in invitation.teams.all():
+                    membership.teams.add(team)
 
-            # Mark invitation as accepted
-            invitation.status = InvitationStatus.ACCEPTED
-            await invitation.asave()
+                # Mark invitation as accepted
+                invitation.status = InvitationStatus.ACCEPTED
+                invitation.save()
+                return membership
+
+        membership = await sync_to_async(_accept, thread_sensitive=True)()
 
         # Reload with related objects
         membership = await Membership.objects.select_related("user", "organization").aget(

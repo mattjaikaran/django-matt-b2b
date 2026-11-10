@@ -46,10 +46,8 @@ root.
 |`make migrations-check`|`python3 scripts/db/check_migrations.py` (no-merge, leaf, safe-migrations)|
 |`make migrations-renumber`|`python3 scripts/db/renumber_migrations.py` (dry run; `ARGS=--apply` writes)|
 
-`make lint` runs both tools and exits non-zero on mypy. mypy currently reports
-16 pre-existing errors in `apps/` (async `transaction.atomic()`, `request.tenant`,
-admin `short_description` and `seed_data`), so the type-check CI job runs with
-`continue-on-error: true`; ruff is the blocking linter.
+`make lint` runs both tools, and both pass on `apps/`; the type-check CI job
+is blocking.
 
 ## Build
 

@@ -7,6 +7,7 @@ from uuid import UUID
 from django.conf import settings as django_settings
 from django.db import transaction
 
+from asgiref.sync import sync_to_async
 from django_matt.auth import jwt_required
 from django_matt.core import APIController
 from django_matt.core.errors import ValidationAPIError
@@ -63,23 +64,26 @@ class OrganizationController(APIController):
         if await Organization.objects.filter(slug=body.slug).aexists():
             raise ValidationAPIError("Organization slug already taken")
 
-        async with transaction.atomic():
-            # Create organization
-            org = await Organization.objects.acreate(
-                name=body.name,
-                slug=body.slug,
-                description=body.description,
-                logo_url=body.logo_url,
-                website=body.website,
-                plan=getattr(django_settings, "DEFAULT_ORG_PLAN", "free"),
-            )
+        def _create() -> Organization:
+            with transaction.atomic():
+                org = Organization.objects.create(
+                    name=body.name,
+                    slug=body.slug,
+                    description=body.description,
+                    logo_url=body.logo_url,
+                    website=body.website,
+                    plan=getattr(django_settings, "DEFAULT_ORG_PLAN", "free"),
+                )
 
-            # Add creator as owner
-            await Membership.objects.acreate(
-                user=request.user,
-                organization=org,
-                role=MembershipRole.OWNER,
-            )
+                # Add creator as owner
+                Membership.objects.create(
+                    user=request.user,
+                    organization=org,
+                    role=MembershipRole.OWNER,
+                )
+                return org
+
+        org = await sync_to_async(_create, thread_sensitive=True)()
 
         return OrganizationSchema(
             id=org.id,

@@ -1,5 +1,7 @@
 """Seed database with sample B2B data for development."""
 
+from typing import Any
+
 from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.utils.text import slugify
@@ -93,7 +95,7 @@ class Command(BaseCommand):
 
     def create_organizations_with_teams(self, admin, users, num_orgs: int):
         """Create organizations with teams and members."""
-        org_data = [
+        org_data: list[dict[str, Any]] = [
             {
                 "name": "Acme Corporation",
                 "description": "A leading technology company specializing in innovative solutions.",
@@ -176,7 +178,7 @@ class Command(BaseCommand):
 
     def _get_job_title(self, role: str) -> str:
         """Get a job title based on role."""
-        titles = {
+        titles: dict[str, str] = {
             MembershipRole.OWNER: "Founder",
             MembershipRole.ADMIN: "Team Lead",
             MembershipRole.MEMBER: "Engineer",
